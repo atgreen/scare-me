@@ -1,8 +1,8 @@
 # scare-me
 > Transform RHEL Insights reports into tomorrow's headlines!
 
-`scare-me` is a fun tool that generates scary news articles based on
-your [RHEL Insights](https://www.redhat.com/en/technologies/management/insights)
+`scare-me` is a fun tool that generates fake scary news articles based on
+your real [RHEL Insights](https://www.redhat.com/en/technologies/management/insights)
 reports.  Customize the article by providing your
 company name and industry.
 
