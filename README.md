@@ -14,6 +14,10 @@ via a locally-hosted ollama instance (localhost:11434).
 
 To build `scare-me`, install `ocicl` with homebrew, and run `make`.
 
-For entertainment purposes only!  Have fun!
+For entertainment purposes only!  Here's some sample output:
+
+<p align="center"><img src="news.png"/></p>
+
+Have fun!
 
 AG
