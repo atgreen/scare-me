@@ -12,6 +12,7 @@
 
 (defvar +version+ #.(uiop:read-file-form #p"version.sexp"))
 
+(defvar *model* "llama3")
 (defvar *name* "YourCorp")
 (defvar *industry* "Business")
 (defvar *outputname* "-")
@@ -24,6 +25,13 @@
    :arg-parser (lambda (arg) (setf *outputname* arg))
    :meta-var "OUTPUTNAME"
    :long "outputname")
+  (:oname :model
+   :description "large language model name"
+   :default "llama3"
+   :short #\m
+   :arg-parser (lambda (arg) (setf *model* arg))
+   :meta-var "MODEL"
+   :long "model")
   (:oname :name
    :description "the name of the company in generated output"
    :default "YourCorp"
@@ -96,19 +104,20 @@
                                                  (format stream "~A: ~A~A~%~%" rule-id summary description)))))))))
                       (handler-case
                           (let ((article
-                                  (let ((c (make-instance 'completions:ollama-completer :model "llama3")))
+                                  (let ((c (make-instance 'completions:ollama-completer :model *model*)))
                                     (completions:get-completion c
                                                                 (format nil "You are writing an article for a newspaper about a recent security breach at ~A, which operates in the ~A industry.
     The company ignored several critical security issues flagged by Red Hat Insights, which allowed hackers to exploit vulnerabilities and gain unauthorized access to the company's sensitive data.
     Using the following Red Hat Insights data, write a detailed article about how the company was breached, explaining the technical issues and how hackers exploited them.
     Use engaging narrative and technical details to explain the incident in a way that is accessible to readers.
     Sprinkle in some quotes from impacted people and insiders to make the narrative really engaging!
-    Generate clear section heading.  Generate markdown output.
+    Generate clear section headings.  Generate markdown output.
     Pick an arbitrary fictional name for the author.
+    Really get into the technical details of the security problem in multiple paragraphs each.
     Don't reply with anything except the article!
 
     Here's an example of excellent output from a different set of inputs:
-----------------------------------------------------
+
 # Big Bank Hacked After Ignoring Critical System Misconfigurations
 ## By Elizabeth D., Technology Reporter
 
@@ -218,13 +227,12 @@ will take note and review their own systems for similar weaknesses
 before it’s too late.
 </article>
 
-----------------------------------------------------
+
 
 Now, generate different content following that same model, but based on the following RHEL Insights produced context:
 
 ~A"
                                                                         *name* *industry* insights-data)))))
-                            (print article)
                             (let ((str (with-output-to-string (stream)
                                          (format stream
                                                  "<!DOCTYPE html>
