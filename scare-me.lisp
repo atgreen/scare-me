@@ -18,13 +18,13 @@
 (defvar *outputname* "-")
 
 (define-opts
-  (:oname :outputname
+  (:oname :outfile
    :description "the HTML output filename (or '-' to write to stdout)"
    :default "-"
    :short #\o
    :arg-parser (lambda (arg) (setf *outputname* arg))
-   :meta-var "OUTPUTNAME"
-   :long "outputname")
+   :meta-var "OUTFILE"
+   :long "outfile")
   (:oname :model
    :description "large language model name"
    :default "llama3"
@@ -77,31 +77,33 @@
     (write-string string out)))
 
 (defun main ()
-      (with-user-abort:with-user-abort
-          (handler-case
-              (multiple-value-bind (options free-args)
-                  (handler-case
-                      (handler-bind ((unknown-option #'unknown-option))
-                        (get-opts))
-                    (missing-arg (condition)
-                      (format t "fatal: option ~s needs an argument!~%"
-                              (option condition)))
-                    (arg-parser-failed (condition)
-                      (format t "fatal: cannot parse ~s as argument of ~s~%"
-                              (raw-arg condition)
-                              (option condition))))
+  (with-user-abort:with-user-abort
+      (handler-case
+          (multiple-value-bind (options free-args)
+              (handler-case
+                  (handler-bind ((unknown-option #'unknown-option))
+                    (get-opts))
+                (missing-arg (condition)
+                  (format t "fatal: option ~s needs an argument!~%"
+                          (option condition)))
+                (arg-parser-failed (condition)
+                  (format t "fatal: cannot parse ~s as argument of ~s~%"
+                          (raw-arg condition)
+                          (option condition))))
 
-                (if (not (eq (length free-args) 1))
-                    (usage)
-                    (let ((insights-data
-                            (with-output-to-string (stream)
-                              (let ((j (njson:decode (read-all-input (car free-args)))))
-                                (loop for i from 0 upto 100 by 1
-                                      until (null (njson:jget i j))
-                                      do (let ((r (njson:jget i j)))
-                                           (njson:jbind ("rule" ("rule_id" rule-id "description" description "summary" summary "impact" ("name" impact))) r
-                                             (if (equal impact "Decreased Security")
-                                                 (format stream "~A: ~A~A~%~%" rule-id summary description)))))))))
+            (if (not (eq (length free-args) 1))
+                (usage)
+                (let ((insights-data
+                        (with-output-to-string (stream)
+                          (let ((j (njson:decode (read-all-input (car free-args)))))
+                            (loop for i from 0 upto 100 by 1
+                                  until (null (njson:jget i j))
+                                  do (let ((r (njson:jget i j)))
+                                       (njson:jbind ("rule" ("rule_id" rule-id "description" description "summary" summary "impact" ("name" impact))) r
+                                         (if (equal impact "Decreased Security")
+                                             (format stream "~A: ~A~A~%~%" rule-id summary description)))))))))
+                  (if (eq (length insights-data) 0)
+                      (format t "No news is good news!~%")
                       (handler-case
                           (let ((article
                                   (let ((c (make-instance 'completions:ollama-completer :model *model*)))
@@ -306,8 +308,8 @@ Now, generate different content following that same model, but based on the foll
 </body></html>"
                                                  (with-output-to-string (s)
                                                    (3bmd:parse-string-and-print-to-stream article s))))))
-                              (write-string-to-output str)))))))
+                              (write-string-to-output str))))))))
             (usocket:timeout-error (e)
-              (format uiop:*stderr* "ERROR: Can't connect to ollama at http://localhost:11434/api/chat~%")
-              (sb-ext:exit :code 1)))
+               (format uiop:*stderr* "ERROR: Can't connect to ollama at http://localhost:11434/api/chat~%")
+               (sb-ext:exit :code 1)))
         (with-user-abort:user-abort () (sb-ext:exit :code 130))))
